@@ -4,7 +4,7 @@ import chart_studio
 import chart_studio.plotly as py
 
 #username = 'devindha'
-#api_key = 'Bf7HCphQQ9N9KUHZLcZA'
+#api_key = ''
 #chart_studio.tools.set_credentials_file(username=username, api_key=api_key)
 
 # getting and cleaning data
