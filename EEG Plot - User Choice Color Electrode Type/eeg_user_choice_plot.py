@@ -14,8 +14,8 @@ def menu():
 # getting and cleaning data
 def get_clean_data():
     eeg_data = pd.read_csv("../129Channels_v2.csv")
-    eeg_data.rename(columns={"Unnamed: 0": "Electrode"}, inplace=True)
-    eeg_data["Peripheral Channel"].fillna(0, inplace=True)
+    eeg_data.rename(columns={"Unnamed: 0": "Electrode", "Peripheral Channel": "Peripheral Electrode"}, inplace=True)
+    eeg_data["Peripheral Electrode"].fillna(0, inplace=True)
 
     eeg_10_20_data = pd.read_excel("../10-10 and 10-20 electrodes.xlsx", engine='openpyxl')
 
@@ -30,56 +30,41 @@ def get_clean_data():
 
     return all_eeg_data
 
-# plotting eeg electrodes with no category highlighted
-def no_category_plot(eeg_data):
-    fig = px.scatter_3d(eeg_data, x='X', y='Y', z='Z', title='EEG Electrode Plot - No Category',
-                        color='Electrode Type', text='Electrode', color_discrete_map={"Electrode": "grey"})
-    fig.show()
+# plotting electrodes with user choice group highlighted
+def plot_eeg(eeg_data, plot_type):
 
-# plotting eeg electrodes with peripheral electrodes highlighted
-def peripheral_plot(eeg_data):
-    # labeling peripheral electrodes
-    eeg_data['Electrode Type'].where(cond=eeg_data['Peripheral Channel'] != 1, other="Peripheral Electrode", inplace=True)
-    fig = px.scatter_3d(eeg_data, x='X', y='Y', z='Z', title='EEG Electrode Plot - Peripheral Electrodes',
-                        color='Electrode Type', text='Electrode', color_discrete_map={"Electrode": "grey",
-                                                                                      "Peripheral Electrode": "red"})
+    if plot_type is None:
+        # no electrode group selected
+        fig = px.scatter_3d(eeg_data, x='X', y='Y', z='Z', title='EEG Electrode Plot - No Category',
+                            color='Electrode Type', text='Electrode', color_discrete_map={"Electrode": "grey"})
+    else:
+        # getting plot type variables
+        highlighted_group_type = plot_type[0]
+        highlighted_group_color = plot_type[1]
+        # labeling electrode group to be highlighted
+        eeg_data['Electrode Type'].where(cond=eeg_data[highlighted_group_type] != 1, other=highlighted_group_type,
+                                         inplace=True)
+        # plotting electrodes with highlighted group
+        fig = px.scatter_3d(eeg_data, x='X', y='Y', z='Z', title='EEG Electrode Plot - '+highlighted_group_type+'s',
+                            color='Electrode Type', text='Electrode',
+                            color_discrete_map={"Electrode": "grey", highlighted_group_type: highlighted_group_color})
+        
     fig.show()
-
-# plotting eeg electrodes with 10-20 electrodes highlighted
-def plot_10_20(eeg_data):
-    # labeling 10-20 electrodes
-    eeg_data['Electrode Type'].where(cond=eeg_data['10-20 Electrode'] != 1, other="10-20 Electrode",
-                                     inplace=True)
-    fig = px.scatter_3d(eeg_data, x='X', y='Y', z='Z', title='EEG Electrode Plot - 10-20 Electrodes',
-                        color='Electrode Type', text='Electrode', color_discrete_map={"Electrode": "grey",
-                                                                                      "10-20 Electrode": "green"})
-    fig.show()
-
-# plotting eeg electrodes with 10-10 electrodes highlighted
-def plot_10_10(eeg_data):
-    # labeling 10-10 electrodes
-    eeg_data['Electrode Type'].where(cond=eeg_data['10-10 Electrode'] != 1, other="10-10 Electrode",
-                                     inplace=True)
-    fig = px.scatter_3d(eeg_data, x='X', y='Y', z='Z', title='EEG Electrode Plot - 10-10 Electrodes',
-                        color='Electrode Type', text='Electrode', color_discrete_map={"Electrode": "grey",
-                                                                                      "10-10 Electrode": "blue"})
-    fig.show()
-
+    
 def main():
     eeg_data = get_clean_data()
     choice = menu()
 
+    choice_map = {1: None, 2: ["Peripheral Electrode", "red"], 3: ["10-10 Electrode", "green"], 4: ["10-20 Electrode", "blue"]}
+
     while 1:
-        if choice == 1:
-            no_category_plot(eeg_data)
-        elif choice == 2:
-            peripheral_plot(eeg_data)
-        elif choice == 3:
-            plot_10_20(eeg_data)
-        elif choice == 4:
-            plot_10_10(eeg_data)
-        else:
+        if choice == 5:
             return
+        else:
+            # plotting electrodes
+            plot_eeg(eeg_data, choice_map[choice])
+            # resetting column for electrode color labels
+            eeg_data["Electrode Type"] = ["Electrode"] * len(eeg_data)
         # allowing user another choice
         choice = menu()
 
